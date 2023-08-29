@@ -1,0 +1,14 @@
+<launch>
+    
+    <include file="$(find ur_robot_driver)/launch/ur5e_bringup.launch">
+    	<arg name="robot_ip" value="192.168.50.5"/>
+    	<!-- <arg name="kinematics_config" value="$(find pearl_ur5e)/my_robot_calibration.yaml"/> -->
+    </include>
+    
+    <include file="$(find ur5e_moveit_config)/launch/move_group.launch"/>
+    
+    <include file="$(find ur5e_moveit_config)/launch/moveit_rviz.launch">
+        <arg name="config" value="$(find ur5e_moveit_config)/launch/moveit.rviz"/>
+    </include>
+  
+</launch>
