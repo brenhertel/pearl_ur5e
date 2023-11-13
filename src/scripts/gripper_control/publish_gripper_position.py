@@ -35,7 +35,7 @@ def talker(c):
 
 if __name__ == '__main__':
     print("Robot must be in Remote Control mode!")
-    HOST = "192.168.50.5" # The UR IP address
+    HOST = "192.168.50.3" # The UR IP address
     PORT = 30002 # UR secondary client
     s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
     s.connect((HOST, PORT))

@@ -1,0 +1,21 @@
+<launch>
+
+
+
+    <!--<node name="zed_camera_publisher_node" pkg="dexterous_picking" type="zed_camera_publisher.py" output="screen"/>-->
+    <include file="$(find ur_robot_driver)/launch/ur5e_bringup.launch">
+    	<arg name="robot_ip" value="192.168.50.3"/>
+    </include>
+    <!--<include file="$(find dexterous_picking)/launch/test.launch"/>-->
+
+    
+    <include file="$(find realsense2_camera)/launch/rs_camera.launch">
+    	<arg name="filters" value="pointcloud"/>
+    	<arg name="align_depth" value="True"/>
+    	<arg name="allow_no_texture_points" value="True"/>
+    	<arg name="ordered_pc" value="True"/>
+    </include>
+    
+    <node name="xyz_coordinate_node" pkg="dexterous_picking" type="navya_test.py"/>
+
+</launch>

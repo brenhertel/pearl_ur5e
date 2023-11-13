@@ -137,7 +137,7 @@ def plot_data(fname):
     return
 
 def main():
-    filename = '/home/pearl/catkin_ws/src/pearl_ur5e/src/scripts/h5_files/recorded_demo 2023-08-21 11:31:55.h5'#raw_input('Enter the filename of the .h5 demo: ')
+    filename = '/home/pearl/catkin_ws/src/pearl_ur5e/src/scripts/h5_files/recorded_demo 2023-11-13 15:50:19.h5'#raw_input('Enter the filename of the .h5 demo: ')
     plot_data(filename)
 
 

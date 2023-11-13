@@ -1,0 +1,10 @@
+<launch>
+
+    <!-- gripper node -->
+    <node name="gripper_node" pkg="dexterous_picking" type="gripper_node.py"/> <!-- launch-prefix="sudo"/> -->
+    
+    <!-- force sensing -->
+    <node name="serial_node" pkg="rosserial_arduino" type="serial_node.py" args="_port:=/dev/ttyACM0" />
+    
+
+</launch>
