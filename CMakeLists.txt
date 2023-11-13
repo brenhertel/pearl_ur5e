@@ -53,6 +53,7 @@ find_package(catkin REQUIRED COMPONENTS
  add_message_files(
    FILES
    gripper_pos.msg
+   force_stamped.msg
 #   Message2.msg
  )
 
