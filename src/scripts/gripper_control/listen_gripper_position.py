@@ -14,30 +14,49 @@ s = None
 c = None
 s_self = None
 
-def myhook():
-    s.close()
-    c.close()
-    s_self.close()
 
 
 def set_position(data, c):
-    #bin_data = '{0:32b}'.format(data.data)
-    #bin_data = format(data.data, "08b")
-    rospy.loginfo('data recieved ' + str(data.data))
-    c.send(chr(data.data))
+    #bin_data1 = '{0:32b}'.format(data.data)
+    #bin_data2 = format(data.data, "08b")
+    rospy.logwarn('data recieved ' + str(data.data))
+    #print(data.data)
+    #print(bin_data1)
+    #print(bin_data2)
+    #print(chr(data.data).encode())
+    #print(str(data.data).encode())
+    c.send(chr(data.data).encode())
 
 def listener(c):
-    print('Connected!')
-    rospy.loginfo('listening to /gripper_sends/position')
-    rospy.Subscriber('/gripper_sends/position', Int32, set_position, c)
     rospy.init_node('gripper_pose_sub', anonymous=True)
-    rospy.on_shutdown(myhook)
+    print('Connected!')
+    try:
+        rospy.logwarn('listening to /gripper_sends/position')
+        rospy.Subscriber('/gripper_sends/position', Int32, set_position, c)
     
-    rospy.spin()
+        rospy.spin()
+        
+        rospy.logerr('Closing Socket Connection')
+        s.close()
+        c.close()
+        s_self.close()
+        
+    except rospy.ROSInterruptException:
+        rospy.logerr('Closing Socket Connection')
+        s.close()
+        c.close()
+        s_self.close()
+    except KeyboardInterrupt:
+        rospy.logerr('Closing Socket Connection')
+        s.close()
+        c.close()
+        s_self.close()
+        
     
 
 if __name__ == '__main__':
-    HOST = "172.16.32.67" # The UR IP address
+    rospy.logwarn("Robot must be in Remote Control mode!")
+    HOST = "192.168.50.3" # The UR IP address
     PORT = 30002 # UR secondary client
     s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
     s.connect((HOST, PORT))
@@ -51,14 +70,13 @@ if __name__ == '__main__':
     	    s_self.bind(('', 32345))
     	    bound = 1
     	except:
-    	    print('Could not bind to port, retrying')
-    	    rospy.loginfo('Could not bind to port, retrying')
+    	    rospy.logwarn('Could not bind to port, retrying')
     	    rospy.sleep(0.1)
     	    bound = 0
     		
     s_self.listen(5)
     
-    f = open ("/home/bhertel/catkin_ws/src/brendan_ur5e/src/scripts/gripper_control/get_pose_from_comp.script", "rb")   #Robotiq Gripper
+    f = open ("/home/pearl/catkin_ws/src/pearl_ur5e/src/scripts/gripper_control/get_pose_from_comp.script", "rb")   #Robotiq Gripper
     #f = open ("setzero.script", "rb")  #Robotiq FT sensor
     
     ln = f.read(1024)
@@ -73,7 +91,7 @@ if __name__ == '__main__':
         c, addr = s_self.accept()
     try:
         listener(c)
-    except rospy.ROSInterruptException:
+    except:
         s.close()
         c.close()
         s_self.close()

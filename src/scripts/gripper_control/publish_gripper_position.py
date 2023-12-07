@@ -13,7 +13,7 @@ import std_msgs
 import os
 
 def talker(c):
-    print('Connected!')
+    rospy.logwarn('Connected!')
     pub = rospy.Publisher('/gripper_data/position', gripper_pos, queue_size=100)
     rospy.init_node('gripper_pose_pub', anonymous=True)
     while not rospy.is_shutdown():
@@ -34,7 +34,7 @@ def talker(c):
     
 
 if __name__ == '__main__':
-    print("Robot must be in Remote Control mode!")
+    rospy.logwarn("Robot must be in Remote Control mode!")
     HOST = "192.168.50.3" # The UR IP address
     PORT = 30002 # UR secondary client
     s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
@@ -49,7 +49,7 @@ if __name__ == '__main__':
     f = open("/home/pearl/catkin_ws/src/pearl_ur5e/src/scripts/gripper_control/send_pose_to_comp.script", "rb")   #Robotiq Gripper
     #f = open ("setzero.script", "rb")  #Robotiq FT sensor
     
-    print("Setting robot to freedrive mode")
+    rospy.logwarn("Setting robot to freedrive mode")
     ln = f.read(1024)
     while (ln):
         s.send(ln)
