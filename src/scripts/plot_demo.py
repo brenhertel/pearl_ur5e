@@ -5,6 +5,8 @@ import h5py
 import matplotlib.pyplot as plt
 from mpl_toolkits import mplot3d
 
+from scipy.interpolate import UnivariateSpline
+
 NUM_JOINTS = 6
 
 def read_data(fname):
@@ -104,9 +106,25 @@ def plot_wrench_data(wrench_data):
 	wr_fig.suptitle('Wrench')
 	time = wrench_data[0][:, 0] + wrench_data[0][:, 1] * (10.0**-9)
 	
+	
+	tt = np.linspace(time[0], time[-1], 1000)
+	spx = UnivariateSpline(time, wrench_data[1][:, 0])
+	spy = UnivariateSpline(time, wrench_data[1][:, 1])
+	spz = UnivariateSpline(time, wrench_data[1][:, 2])
+	spx.set_smoothing_factor(999)
+	spy.set_smoothing_factor(999)
+	spz.set_smoothing_factor(999)
+	xx = spx(tt)
+	yy = spy(tt)
+	zz = spz(tt)
+	
+	
 	ax1.plot(time, wrench_data[1][:, 0], label='x')
 	ax1.plot(time, wrench_data[1][:, 1], label='y')
 	ax1.plot(time, wrench_data[1][:, 2], label='z')
+	ax1.plot(tt, xx, label='xx')
+	ax1.plot(tt, yy, label='yy')
+	ax1.plot(tt, zz, label='zz')
 	ax2.plot(time, wrench_data[2][:, 0], label='x')
 	ax2.plot(time, wrench_data[2][:, 1], label='y')
 	ax2.plot(time, wrench_data[2][:, 2], label='z')

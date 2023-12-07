@@ -4,7 +4,7 @@
     <node name="gripper_pose_pub" pkg="pearl_ur5e" type="publish_gripper_position.py"/> 
     
     <!-- force sensing -->
-    <node name="serial_node" pkg="rosserial_arduino" type="serial_node.py" args="_port:=/dev/ttyACM0" />
+    <node name="serial_node" pkg="rosserial_python" type="serial_node.py" args="_port:=/dev/ttyACM2" />
     
 
 </launch>

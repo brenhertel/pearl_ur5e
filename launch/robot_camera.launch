@@ -2,11 +2,7 @@
 
 
 
-    <!--<node name="zed_camera_publisher_node" pkg="dexterous_picking" type="zed_camera_publisher.py" output="screen"/>-->
-    <include file="$(find ur_robot_driver)/launch/ur5e_bringup.launch">
-    	<arg name="robot_ip" value="192.168.50.3"/>
-    </include>
-    <!--<include file="$(find dexterous_picking)/launch/test.launch"/>-->
+    <include file="$(find pearl_ur5e)/launch/robot.launch"/>
 
     
     <include file="$(find realsense2_camera)/launch/rs_camera.launch">
@@ -16,6 +12,6 @@
     	<arg name="ordered_pc" value="True"/>
     </include>
     
-    <node name="xyz_coordinate_node" pkg="dexterous_picking" type="navya_test.py"/>
+    <node name="camera_base_broadcaster" pkg="pearl_ur5e" type="camera_base_broadcaster.py"/>
 
 </launch>

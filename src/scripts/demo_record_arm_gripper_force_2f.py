@@ -193,6 +193,7 @@ def save_demo():
 		dset_fp = fp.create_dataset('/gripper_info/forces', data=fr_pos_arr)
 		
 		fp.close()
+		print("Recorded in: " + name)
 	else:
 		print("No data recorded!")
 	
@@ -210,7 +211,7 @@ def end_record(js_file, tf_file, wr_file, gr_file, fr_file):
     if (save == 'y'):
     	save_demo()
 
-    cont = input('Would you like to start another demo? (y/n)')
+    cont = 'n'# input('Would you like to start another demo? (y/n)')
     rospy.loginfo("You entered: %s", cont)
     if (cont == 'y'):
         demo_recorder()

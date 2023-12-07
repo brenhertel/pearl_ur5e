@@ -1,0 +1,8 @@
+<launch>
+
+    <!-- gripper node -->
+    <node name="listen_pose_sub" pkg="pearl_ur5e" type="listen_gripper_position.py"/> 
+    
+    <!-- glove to gripper mapping -->
+    <node name="glove_listener" pkg="pearl_ur5e" type="glove_listener.py" />
+</launch>
