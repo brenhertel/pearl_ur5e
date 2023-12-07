@@ -1,0 +1,10 @@
+<launch>
+
+
+
+    <include file="$(find pearl_ur5e)/launch/robot.launch"/>
+
+    
+    <node name="gripper_pubsub" pkg="pearl_ur5e" type="gripper_pubsub.py"/>
+
+</launch>

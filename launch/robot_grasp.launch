@@ -1,0 +1,23 @@
+<launch>
+
+
+
+    <include file="$(find pearl_ur5e)/launch/robot.launch"/>
+
+    
+    <include file="$(find realsense2_camera)/launch/rs_camera.launch">
+    	<arg name="filters" value="pointcloud"/>
+    	<arg name="align_depth" value="True"/>
+    	<arg name="allow_no_texture_points" value="True"/>
+    	<arg name="ordered_pc" value="True"/>
+    </include>
+    
+    <node name="camera_base_broadcaster" pkg="pearl_ur5e" type="camera_base_broadcaster.py"/>
+
+    <node name="grasp_detection_node" pkg="dexterous_picking" type="grasp_detection.py" output="screen"/>
+
+    <node name="dexterous_picking_pipeline_node" pkg="dexterous_picking" type="dexterous_picking_pipeline.py" output="screen"/>
+
+    <node name="grasp_service_caller" pkg="pearl_ur5e" type="grasp_service_caller.py" output="screen"/>
+
+</launch>

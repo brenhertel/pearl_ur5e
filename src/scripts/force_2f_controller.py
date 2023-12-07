@@ -15,7 +15,7 @@ def calc_moving_avg(x, window_size, step_size):
         new_x[i] = np.mean(x[y[i] - window_size//2 : y[i] + window_size//2])
     return new_x, y
 
-class ForceController(object):
+class ForceControllerNaive(object):
 
     def __init__(self, fname):
         joint_data, tf_data, wrench_data, gripper_data = read_data(fname)
@@ -85,6 +85,72 @@ class ForceController(object):
         if self.cur_pos < 5:
             self.cur_pos = 5
         return self.cur_pos
+
+class ForceController(object):
+
+    def __init__(self, time, gripper_forces, init_pose=5, final_pose=5):
+        
+        self.time = time
+        self.gforce = gripper_forces
+        self.time_checks = time[inds] - time[0]
+        
+        self.t0 = None
+        
+        self.cur_pos = int(init_pose)
+        
+        self.pub = rospy.Publisher('/gripper_sends/position', Int32, queue_size=1)
+        rospy.sleep(0.1)
+        self.new_msg = Int32()
+        self.new_msg.data = self.cur_pos
+        self.pub.publish(self.new_msg)
+        
+        try:
+            rospy.Subscriber('/gripper_sensors', gripper_pos, self.check_force, queue_size=1)
+            rospy.spin()
+        except rospy.ROSInterruptException:
+            rospy.logwarn('Shutting down')
+            self.new_msg.data = int(final_pose)
+            self.pub.publish(self.new_msg)
+        except KeyboardInterrupt:
+            rospy.logwarn('Shutting down')
+            self.new_msg.data = int(final_pose)
+            self.pub.publish(self.new_msg)
+        
+    def check_force(self, msg):
+        if self.t0 is None:
+            self.t0 = msg.header.stamp.secs + msg.header.stamp.nsecs * (10.0**-9)
+        else:
+            cur_time = (msg.header.stamp.secs + msg.header.stamp.nsecs * (10.0**-9)) - self.t0
+            if cur_time <= self.time_checks[-1]:
+                inds_passed = cur_time > self.time_checks
+                gripper_forces = self.gforce[inds_passed]
+                if len(gripper_forces) > 0:
+                    tgt_force = gripper_forces[-1]
+                    cur_force = msg.gripper_pos
+                    print(cur_time, cur_force, tgt_force, self.cur_pos)
+                    if cur_force*1.1 < tgt_force:
+                        if self.cur_pos < 95:
+                            self.new_msg.data = self.increase_pos(cur_force, tgt_force)
+                            self.pub.publish(self.new_msg)
+                            rospy.sleep(0.1)
+                    if cur_force > tgt_force*1.1:
+                        if self.cur_pos > 5:
+                            self.new_msg.data = self.decrease_pos(cur_force, tgt_force)
+                            self.pub.publish(self.new_msg)
+                            rospy.sleep(0.1)
+    
+    def increase_pos(self, cur_force, tgt_force):
+        self.cur_pos = self.cur_pos + 1 + int(tgt_force // cur_force)
+        if self.cur_pos > 95:
+            self.cur_pos = 95
+        return self.cur_pos
+
+    
+    def decrease_pos(self, cur_force, tgt_force):
+        self.cur_pos = self.cur_pos - 1 - int(cur_force // tgt_force)
+        if self.cur_pos < 5:
+            self.cur_pos = 5
+        return self.cur_pos
         
         
 def main():
@@ -92,7 +158,7 @@ def main():
     
     fname = 'h5_files/recorded_demo 2023-11-28 12:20:30.h5'
     
-    FC = ForceController(fname)
+    FC = ForceControllerNaive(fname)
     
     
     

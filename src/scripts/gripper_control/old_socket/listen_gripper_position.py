@@ -57,7 +57,7 @@ def listener(c):
 if __name__ == '__main__':
     rospy.logwarn("Robot must be in Remote Control mode!")
     HOST = "192.168.50.3" # The UR IP address
-    PORT = 30002 # UR secondary client
+    PORT = 30005 # UR primary client
     s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
     s.connect((HOST, PORT))
     

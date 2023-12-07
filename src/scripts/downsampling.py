@@ -218,7 +218,7 @@ def DouglasPeuckerPoints2(PointList, num_points):
                     index = i
                     dmax = d
                     segnum = seg
-        print(dmax)
+        #print(dmax)
         ResultList = np.insert(ResultList, segnum + 1, PointList[index, :], axis=0)
         inds.insert(segnum + 1, index)
     # Return the result

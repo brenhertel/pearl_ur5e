@@ -1,0 +1,4 @@
+<launch>
+<node name="Arduino_Force" pkg="rosserial_python" type="serial_node.py" args="_port:=/dev/ttyACM2" />
+<node name="Arduino_IMU" pkg="rosserial_python" type="serial_node.py" args="_port:=/dev/ttyACM1" />
+</launch>

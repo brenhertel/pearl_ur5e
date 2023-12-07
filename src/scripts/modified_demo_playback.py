@@ -20,6 +20,9 @@ import matplotlib.pyplot as plt
 from scipy.spatial.transform import Rotation as R
 from scipy.spatial.transform import Slerp
 
+DEMO_NAME = 'h5_files/recorded_demo 2024-09-09 15:33:11.h5'
+REPRO_NAME = 'efm_repro_erase1.txt'
+
 #not actually sure why this is here or why its necessary, but I suppose its a good way to test tolerances
 def all_close(goal, actual, tolerance):
   """
@@ -89,9 +92,9 @@ class MoveGroupPythonInterface(object):
     # To start the playback of the demo, go to the initial demo position, which can be interpreted as the 0th set of joint states
     # I use joint states instead of cartesians because cartesians will fail if the current state is too far away from the goal state, whereas joint states will simply execute
     joint_goal = self.move_group.get_current_joint_values()
-    joint_goal[0] = js_array[i][0]
+    joint_goal[0] = js_array[i][2]
     joint_goal[1] = js_array[i][1]
-    joint_goal[2] = js_array[i][2]
+    joint_goal[2] = js_array[i][0]
     joint_goal[3] = js_array[i][3]
     joint_goal[4] = js_array[i][4]
     joint_goal[5] = js_array[i][5]
@@ -134,7 +137,7 @@ class MoveGroupPythonInterface(object):
     
     #ask user for the file which the playback is for
     #filename = raw_input('Enter the filename of the .h5 demo: ')
-    filename = 'h5_files/recorded_demo 2023-07-27 16:10:05.h5'
+    filename = DEMO_NAME
     #open the file
     hf = h5py.File(filename, 'r')
     #navigate to necessary data and store in numpy arrays
@@ -148,13 +151,15 @@ class MoveGroupPythonInterface(object):
     js_data = np.array(js_data)
     #close out file
     hf.close()
+    
+    js_data = np.loadtxt('path_joint.txt')
 
     #### move to starting position ####
     self.goto_joint_state(js_data, 0)
     print("Press 'Enter' to start")
     input()
     
-    for i in range(1, len(js_data), 50):
+    for i in range(1, len(js_data)):
     	self.goto_joint_state(js_data, i)
  
     return 
@@ -164,7 +169,7 @@ class MoveGroupPythonInterface(object):
     
     #ask user for the file which the playback is for
     #filename = raw_input('Enter the filename of the .h5 demo: ')
-    filename = 'h5_files/owen_pressing_demo.h5'
+    filename = DEMO_NAME
     #open the file
     hf = h5py.File(filename, 'r')
     #navigate to necessary data and store in numpy arrays
@@ -185,21 +190,31 @@ class MoveGroupPythonInterface(object):
     print("Press 'Enter' to start")
     input()
     
-    repro_traj = np.loadtxt('h5_files/elmap_repro.txt')
+    repro_traj = np.loadtxt(REPRO_NAME)
     print('start')
     print(repro_traj[0, :])
     print('end')
     print(repro_traj[-1, :])
     (n_pts, n_dims) = np.shape(repro_traj)
     
+    ## TRANSFORM, ONLY FOR EFML
+    valMin = -0.50406
+    repro_traj[:, 0] = ((repro_traj[:, 0] - 1) / 100) - abs(valMin)
+    repro_traj[:, 1] = ((repro_traj[:, 1] - 1) / 100) - abs(valMin)
+    repro_traj[:, 2] = repro_traj[:, 2] / 100
+    print('start')
+    print(repro_traj[0, :])
+    print('end')
+    print(repro_traj[-1, :])
+    (n_pts, n_dims) = np.shape(repro_traj)
     
     print("Press 'Enter' to move to starting position from xyz coords")
     input()
     self.goto_xyz(repro_traj, rot_data)
 
     (n_pts_og, _) = np.shape(rot_data)
-    og_moments = [0.0, 0.5, 1.0]
-    moments = [0.0, 0.5, 1.0]
+    og_moments = [0.0, 0.25, 0.5, 0.75, 1.0]
+    moments = [0.0, 0.25, 0.5, 0.75, 1.0]
     true_inds = [int(moments[i] * (n_pts_og - 1)) for i in range(len(og_moments))]
     key_inds = [int(moments[i] * (n_pts - 1)) for i in range(len(moments))]
     key_rots = R.from_quat([ [rot_data[ind][0], rot_data[ind][1], rot_data[ind][2], rot_data[ind][3]] for ind in true_inds])
@@ -214,7 +229,7 @@ class MoveGroupPythonInterface(object):
     print('Executing')
     waypoints = []
     wpose = self.move_group.get_current_pose().pose
-    for i in range(1, n_pts, 2):
+    for i in range(1, n_pts):
       
       cur_R = slerp(np.array([i]))
       cur_quats = cur_R.as_quat()
@@ -226,7 +241,7 @@ class MoveGroupPythonInterface(object):
     
     #ask user for the file which the playback is for
     #filename = raw_input('Enter the filename of the .h5 demo: ')
-    filename = 'h5_files/owen_pressing_demo.h5'
+    filename = DEMO_NAME
     #open the file
     hf = h5py.File(filename, 'r')
     #navigate to necessary data and store in numpy arrays
@@ -243,34 +258,62 @@ class MoveGroupPythonInterface(object):
     
     
     #### move to starting position ####
-    #self.goto_joint_state(js_data, 0)
     print("Press 'Enter' to start")
     input()
+    print('Going to Joint State: ' + str(js_data[0]))
+    self.goto_joint_state(js_data, 0)
     
-    repro_traj = np.loadtxt('h5_files/elmap_repro.txt')
+    repro_traj = np.loadtxt(REPRO_NAME)
+    
+    #Load segmented repro
+    repro_seg0 = np.loadtxt('efm_repro_erase_no_forces0.txt')
+    repro_seg1 = np.loadtxt('efm_repro_erase_no_forces_mod1.txt')
+    repro_seg2 = np.loadtxt('efm_repro_erase_no_forces2.txt')
+    repro_traj = np.vstack((repro_seg0, repro_seg1, repro_seg2))
+    
     print('start')
     print(repro_traj[0, :])
     print('end')
     print(repro_traj[-1, :])
     (n_pts, n_dims) = np.shape(repro_traj)
     
+    '''
+    ## TRANSFORM, ONLY FOR EFML
+    valMin = -0.50406
+    repro_traj[:, 0] = -(((repro_traj[:, 0] - 1) / 100) - abs(valMin))
+    repro_traj[:, 1] = ((repro_traj[:, 1] - 1) / 100) - abs(valMin)
+    repro_traj[:, 2] = repro_traj[:, 2] / 100
+    print('start')
+    print(repro_traj[0, :])
+    print('end')
+    print(repro_traj[-1, :])
+    (n_pts, n_dims) = np.shape(repro_traj)
+    '''
+    
+    
     
     print("Press 'Enter' to move to starting position from xyz coords")
     input()
     self.goto_xyz(repro_traj, rot_data)
 
+    
     (n_pts_og, _) = np.shape(rot_data)
-    og_moments = [0.0, 0.5, 1.0]
-    moments = [0.0, 0.5, 1.0]
-    true_inds = [int(moments[i] * (n_pts_og - 1)) for i in range(len(og_moments))]
+    og_moments = [0.0, 0.4, 0.5, 0.6, 1.0]
+    moments = [0.0, 0.25, 0.5, 0.75, 1.0]
+    true_inds = [int(og_moments[i] * (n_pts_og - 1)) for i in range(len(og_moments))]
     key_inds = [int(moments[i] * (n_pts - 1)) for i in range(len(moments))]
     key_rots = R.from_quat([ [rot_data[ind][0], rot_data[ind][1], rot_data[ind][2], rot_data[ind][3]] for ind in true_inds])
-    #print(key_rots.as_quat())
-    #print(true_inds)
-    #print(key_inds)
+    print(key_rots.as_quat())
+    print(true_inds)
+    print(key_inds)
     
+    '''
+    rots = np.loadtxt('repros/quatsX.txt')
+    key_inds = [int(i) for i in np.linspace(0, len(repro_traj), len(rots))]
+    key_rots = R.from_quat([ [rots[ind][0], rots[ind][1], rots[ind][2], rots[ind][3]] for ind in range(len(rots))])
+    '''
     slerp = Slerp(key_inds, key_rots)
-
+    
     #print('Press enter to continue')
     #input()
     print('Planning')
@@ -280,7 +323,7 @@ class MoveGroupPythonInterface(object):
     
       wpose.position.x = -repro_traj[i][0] #/tf and rviz have x and y opposite signs
       wpose.position.y = -repro_traj[i][1] 
-      wpose.position.z = repro_traj[i][2] - 0.012
+      wpose.position.z = repro_traj[i][2]
       
       cur_R = slerp(np.array([i]))
       cur_quats = cur_R.as_quat()
@@ -289,6 +332,15 @@ class MoveGroupPythonInterface(object):
       wpose.orientation.y = cur_quats[0][0]
       wpose.orientation.z = cur_quats[0][3]
       wpose.orientation.w = -cur_quats[0][2]
+      '''
+      new_quats = np.array([-cur_quats[0][1] - 0.2, cur_quats[0][0] - 0.1, cur_quats[0][3] - 0.1, -cur_quats[0][2]])
+      new_quats = new_quats / np.linalg.norm(new_quats)
+      wpose.orientation.x = new_quats[0]
+      wpose.orientation.y = new_quats[1]
+      wpose.orientation.z = new_quats[2]
+      wpose.orientation.w = new_quats[3]
+      '''
+      
       
       waypoints.append(copy.deepcopy(wpose))
     (plan, fraction) = self.move_group.compute_cartesian_path(
@@ -346,7 +398,7 @@ class MoveGroupPythonInterface(object):
     box_pose = geometry_msgs.msg.PoseStamped()
     box_pose.header.frame_id = self.robot.get_planning_frame()
     box_pose.pose.orientation.w = 1.0
-    box_pose.pose.position.y = -0.15 # next to the robot
+    box_pose.pose.position.y = -0.3 # next to the robot
     self.box_name2 = "wall"
     self.scene.add_box(self.box_name2, box_pose, size=(10, 0.02, 10))
     return self.wait_for_state_update(self.box_name2, box_is_known=True, timeout=timeout)
@@ -367,10 +419,12 @@ def main():
     input()
     ur5e_arm = MoveGroupPythonInterface()
     #table and wall have to be added in separately--for some reason adding them together didn't work
-    print("Press 'Enter' to add in obstacles")
-    input()
     ur5e_arm.add_table()
     ur5e_arm.add_wall()
+    
+    #print("Press 'Enter' to execute")
+    #input()
+    #ur5e_arm.execute_joint_path()
     
     #print("Press 'Enter' to execute")
     #input()
@@ -383,6 +437,7 @@ def main():
     print("Press 'Enter' to execute trajectory")
     input()
     ur5e_arm.execute_plan(plan)
+    
     print("Execution complete")
     print("Press 'Enter' to exit'")
     input()

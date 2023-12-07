@@ -1,0 +1,10 @@
+<launch>
+
+
+
+    <include file="$(find pearl_ur5e)/launch/robot_camera.launch"/>
+
+    
+    <include file="$(find pearl_ur5e)/launch/glove_listen.launch"/>
+
+</launch>
