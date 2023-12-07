@@ -665,7 +665,7 @@ def gripper():
   while(1):
   	new_int = socket_read_byte_list(1, "comp_socket")
   	if (new_int[0] > 0):
-  		popup(new_int[1])
+  		#popup(new_int[1])
   		rq_move_norm(new_int[1], "1")
   	end
   	#str_socket = socket_read_line("comp_socket")

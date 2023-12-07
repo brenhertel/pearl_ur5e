@@ -1,0 +1,10 @@
+<launch>
+
+    <!-- gripper node -->
+    <node name="listen_pose_sub" pkg="pearl_ur5e" type="listen_gripper_position.py"/> 
+    
+    <!-- force sensing -->
+    <node name="serial_node" pkg="rosserial_arduino" type="serial_node.py" args="_port:=/dev/ttyACM0" />
+    
+
+</launch>
