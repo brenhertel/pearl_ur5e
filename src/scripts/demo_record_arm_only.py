@@ -143,6 +143,9 @@ def save_demo():
 		dset_wm = fp.create_dataset('/wrench_info/wrench_torque', data=wr_torq_arr)
 		
 		fp.close()
+		print("Saved as: " + name)
+	else:
+		print('No Data Recorded!')
 	
 def end_record(js_file, tf_file, wr_file):
     print(time.time())

@@ -35,7 +35,11 @@ def read_data(fname):
     gp = hf.get('gripper_info')
     gripper_time = np.array(gp.get('gripper_time'))
     gripper_pos = np.array(gp.get('gripper_position'))
+    #gripper_time = []
+    #gripper_pos = []
     gripper_data = [gripper_time, gripper_pos]
+    
+    
     
     hf.close()
     
@@ -107,24 +111,24 @@ def plot_wrench_data(wrench_data):
 	time = wrench_data[0][:, 0] + wrench_data[0][:, 1] * (10.0**-9)
 	
 	
-	tt = np.linspace(time[0], time[-1], 1000)
-	spx = UnivariateSpline(time, wrench_data[1][:, 0])
-	spy = UnivariateSpline(time, wrench_data[1][:, 1])
-	spz = UnivariateSpline(time, wrench_data[1][:, 2])
-	spx.set_smoothing_factor(999)
-	spy.set_smoothing_factor(999)
-	spz.set_smoothing_factor(999)
-	xx = spx(tt)
-	yy = spy(tt)
-	zz = spz(tt)
+	#tt = np.linspace(time[0], time[-1], 1000)
+	#spx = UnivariateSpline(time, wrench_data[1][:, 0])
+	#spy = UnivariateSpline(time, wrench_data[1][:, 1])
+	#spz = UnivariateSpline(time, wrench_data[1][:, 2])
+	#spx.set_smoothing_factor(999)
+	#spy.set_smoothing_factor(999)
+	#spz.set_smoothing_factor(999)
+	#xx = spx(tt)
+	#yy = spy(tt)
+	#zz = spz(tt)
 	
 	
 	ax1.plot(time, wrench_data[1][:, 0], label='x')
 	ax1.plot(time, wrench_data[1][:, 1], label='y')
 	ax1.plot(time, wrench_data[1][:, 2], label='z')
-	ax1.plot(tt, xx, label='xx')
-	ax1.plot(tt, yy, label='yy')
-	ax1.plot(tt, zz, label='zz')
+	#ax1.plot(tt, xx, label='xx')
+	#ax1.plot(tt, yy, label='yy')
+	#ax1.plot(tt, zz, label='zz')
 	ax2.plot(time, wrench_data[2][:, 0], label='x')
 	ax2.plot(time, wrench_data[2][:, 1], label='y')
 	ax2.plot(time, wrench_data[2][:, 2], label='z')
@@ -155,7 +159,7 @@ def plot_data(fname):
     return
 
 def main():
-    filename = '/home/pearl/catkin_ws/src/pearl_ur5e/src/scripts/h5_files/recorded_demo 2023-11-13 15:50:19.h5'#raw_input('Enter the filename of the .h5 demo: ')
+    filename = '/home/pearl/catkin_ws/src/pearl_ur5e/src/scripts/h5_files/recorded_demo 2026-05-14 12:18:47.h5'#raw_input('Enter the filename of the .h5 demo: ')
     plot_data(filename)
 
 

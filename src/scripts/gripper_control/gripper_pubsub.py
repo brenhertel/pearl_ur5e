@@ -5,7 +5,8 @@ from pearl_ur5e.msg import gripper_pos
 from std_msgs.msg import Int32
 import std_msgs
 
-ip = "192.168.50.3"
+#ip = "192.168.50.3"
+ip = rospy.get_param("/robot_ip")
 
 class PubSub(object):
 

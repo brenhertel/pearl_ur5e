@@ -82,18 +82,19 @@ class MyViz( QWidget ):
         ## instance, which is a very central class.  It has pointers
         ## to other manager objects and is generally required to make
         ## any changes in an rviz instance.
-        self.manager = self.frame.getManager()
+        #self.manager = self.frame.getManager()
 
         ## Since the config file is part of the source code for this
         ## example, we know that the first display in the list is the
         ## grid we want to control.  Here we just save a reference to
         ## it for later.
-        self.grid_display = self.manager.getRootDisplayGroup().getDisplayAt( 0 )
+        #self.grid_display = self.manager.getRootDisplayGroup().getDisplayAt( 0 )
         
         ## Here we create the layout and other widgets in the usual Qt way.
         layout = QVBoxLayout()
         layout.addWidget( self.frame )
         
+        '''
         thickness_slider = QSlider( Qt.Horizontal )
         thickness_slider.setTracking( True )
         thickness_slider.setMinimum( 1 )
@@ -112,6 +113,7 @@ class MyViz( QWidget ):
         h_layout.addWidget( side_button )
         
         layout.addLayout( h_layout )
+        '''
         
         self.setLayout( layout )
 

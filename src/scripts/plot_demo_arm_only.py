@@ -17,6 +17,7 @@ def read_data(fname):
     joint_vel = np.array(js.get('joint_velocities'))
     joint_eff = np.array(js.get('joint_effort'))
     joint_data = [joint_time, joint_pos, joint_vel, joint_eff]
+    np.savetxt("demo_joints_pickplace.txt", joint_pos)
     
     tf = hf.get('transform_info')
     tf_time = np.array(tf.get('transform_time'))
@@ -90,8 +91,6 @@ def plot_tf_data(tf_data):
 	ax.set_ylabel('y')
 	ax.set_zlabel('z')
 	
-	np.savetxt('succ2_demo.txt', tf_data[1])
-	
 def plot_wrench_data(wrench_data):
 	wr_fig, (ax1, ax2) = plt.subplots(2, 1)
 	wr_fig.suptitle('Wrench')
@@ -121,7 +120,7 @@ def plot_data(fname):
     return
 
 def main():
-    filename = ''#PUT FILENAME HERE
+    filename = 'h5_files/recorded_demo 2026-02-10 14:56:02.h5'
     plot_data(filename)
 
 

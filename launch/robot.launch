@@ -1,7 +1,11 @@
 <launch>
     
+    <arg name="ROBOT_IP" value="192.168.50.3"/>
+    
+    <param name="/robot_ip" type="str" value="$(arg ROBOT_IP)"/>
+    
     <include file="$(find ur_robot_driver)/launch/ur5e_bringup.launch">
-    	<arg name="robot_ip" value="192.168.50.3"/>
+    	<arg name="robot_ip" value="$(arg ROBOT_IP)"/>
     	<!-- <arg name="kinematics_config" value="$(find pearl_ur5e)/my_robot_calibration.yaml"/> -->
     </include>
     

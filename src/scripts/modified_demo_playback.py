@@ -11,6 +11,8 @@ import moveit_msgs.msg
 import geometry_msgs.msg
 from math import pi
 from std_msgs.msg import String
+from tf.msg import tfMessage
+from std_msgs.msg import Int32
 from moveit_commander.conversions import pose_to_list
 import h5py
 import roslib
@@ -20,8 +22,10 @@ import matplotlib.pyplot as plt
 from scipy.spatial.transform import Rotation as R
 from scipy.spatial.transform import Slerp
 
-DEMO_NAME = 'h5_files/recorded_demo 2024-09-09 15:33:11.h5'
-REPRO_NAME = 'efm_repro_erase1.txt'
+DEMO_NAME = 'h5_files/recorded_demo 2026-01-29 16:52:33.h5'
+REPRO_NAME = 'traj_res.txt'
+START_IDX = 17790
+END_IDX = 19282
 
 #not actually sure why this is here or why its necessary, but I suppose its a good way to test tolerances
 def all_close(goal, actual, tolerance):
@@ -51,6 +55,7 @@ class MoveGroupPythonInterface(object):
   def __init__(self):
     super(MoveGroupPythonInterface, self).__init__()
     #the moveit_commander is what is responsible for sending info the moveit controllers
+    print(sys.argv)
     moveit_commander.roscpp_initialize(sys.argv)
     #initialize node
     rospy.init_node('demo_xyz_playback', anonymous=True)
@@ -78,6 +83,7 @@ class MoveGroupPythonInterface(object):
     #print  Available Planning Groups:", robot.get_group_names()
 
     # Misc variables
+    self.gripper_publisher = rospy.Publisher('/gripper_sends/position', Int32, queue_size=20)
     self.box_name1 = ''
     self.box_name2 = ''
     self.robot = robot
@@ -152,14 +158,14 @@ class MoveGroupPythonInterface(object):
     #close out file
     hf.close()
     
-    js_data = np.loadtxt('path_joint.txt')
+    #js_data = np.loadtxt('path_joint.txt')
 
     #### move to starting position ####
     self.goto_joint_state(js_data, 0)
     print("Press 'Enter' to start")
     input()
     
-    for i in range(1, len(js_data)):
+    for i in range(1, len(js_data), 25):
     	self.goto_joint_state(js_data, i)
  
     return 
@@ -186,26 +192,22 @@ class MoveGroupPythonInterface(object):
     
     
     #### move to starting position ####
-    self.goto_joint_state(js_data, 0)
     print("Press 'Enter' to start")
     input()
+    self.goto_joint_state(js_data, 0)
     
-    repro_traj = np.loadtxt(REPRO_NAME)
+    repro_traj = np.loadtxt(REPRO_NAME, delimiter=',')
     print('start')
     print(repro_traj[0, :])
     print('end')
     print(repro_traj[-1, :])
     (n_pts, n_dims) = np.shape(repro_traj)
     
-    ## TRANSFORM, ONLY FOR EFML
-    valMin = -0.50406
-    repro_traj[:, 0] = ((repro_traj[:, 0] - 1) / 100) - abs(valMin)
-    repro_traj[:, 1] = ((repro_traj[:, 1] - 1) / 100) - abs(valMin)
-    repro_traj[:, 2] = repro_traj[:, 2] / 100
     print('start')
     print(repro_traj[0, :])
     print('end')
     print(repro_traj[-1, :])
+    
     (n_pts, n_dims) = np.shape(repro_traj)
     
     print("Press 'Enter' to move to starting position from xyz coords")
@@ -213,8 +215,8 @@ class MoveGroupPythonInterface(object):
     self.goto_xyz(repro_traj, rot_data)
 
     (n_pts_og, _) = np.shape(rot_data)
-    og_moments = [0.0, 0.25, 0.5, 0.75, 1.0]
-    moments = [0.0, 0.25, 0.5, 0.75, 1.0]
+    og_moments = [0.0, 0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8, 0.9, 1.0]
+    moments = [0.0, 0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8, 0.9, 1.0]
     true_inds = [int(moments[i] * (n_pts_og - 1)) for i in range(len(og_moments))]
     key_inds = [int(moments[i] * (n_pts - 1)) for i in range(len(moments))]
     key_rots = R.from_quat([ [rot_data[ind][0], rot_data[ind][1], rot_data[ind][2], rot_data[ind][3]] for ind in true_inds])
@@ -256,6 +258,12 @@ class MoveGroupPythonInterface(object):
     #close out file
     hf.close()
     
+    '''
+    inds = np.loadtxt('inds13_38_50.txt').astype('int')
+    pos_data = pos_data[inds]
+    rot_data = rot_data[inds]
+    js_data = js_data[inds]
+    '''
     
     #### move to starting position ####
     print("Press 'Enter' to start")
@@ -264,42 +272,22 @@ class MoveGroupPythonInterface(object):
     self.goto_joint_state(js_data, 0)
     
     repro_traj = np.loadtxt(REPRO_NAME)
-    
-    #Load segmented repro
-    repro_seg0 = np.loadtxt('efm_repro_erase_no_forces0.txt')
-    repro_seg1 = np.loadtxt('efm_repro_erase_no_forces_mod1.txt')
-    repro_seg2 = np.loadtxt('efm_repro_erase_no_forces2.txt')
-    repro_traj = np.vstack((repro_seg0, repro_seg1, repro_seg2))
-    
+        
     print('start')
     print(repro_traj[0, :])
     print('end')
     print(repro_traj[-1, :])
     (n_pts, n_dims) = np.shape(repro_traj)
-    
-    '''
-    ## TRANSFORM, ONLY FOR EFML
-    valMin = -0.50406
-    repro_traj[:, 0] = -(((repro_traj[:, 0] - 1) / 100) - abs(valMin))
-    repro_traj[:, 1] = ((repro_traj[:, 1] - 1) / 100) - abs(valMin)
-    repro_traj[:, 2] = repro_traj[:, 2] / 100
-    print('start')
-    print(repro_traj[0, :])
-    print('end')
-    print(repro_traj[-1, :])
-    (n_pts, n_dims) = np.shape(repro_traj)
-    '''
-    
-    
-    
+        
     print("Press 'Enter' to move to starting position from xyz coords")
     input()
-    self.goto_xyz(repro_traj, rot_data)
+    self.goto_xyz(repro_traj, rot_data, i=690)
+    #self.gripper_publisher.publish(int(repro_traj[0, 3] * 1.1 * 100))
 
     
     (n_pts_og, _) = np.shape(rot_data)
-    og_moments = [0.0, 0.4, 0.5, 0.6, 1.0]
-    moments = [0.0, 0.25, 0.5, 0.75, 1.0]
+    og_moments = np.linspace(0, 1, 11) #[0.0, 0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8, 0.9, 1.0]
+    moments = np.linspace(0, 1, 11)  #[0.0, 0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8, 0.9, 1.0]
     true_inds = [int(og_moments[i] * (n_pts_og - 1)) for i in range(len(og_moments))]
     key_inds = [int(moments[i] * (n_pts - 1)) for i in range(len(moments))]
     key_rots = R.from_quat([ [rot_data[ind][0], rot_data[ind][1], rot_data[ind][2], rot_data[ind][3]] for ind in true_inds])
@@ -308,7 +296,7 @@ class MoveGroupPythonInterface(object):
     print(key_inds)
     
     '''
-    rots = np.loadtxt('repros/quatsX.txt')
+    rots = np.loadtxt('failmap_pouring_eulerquattraj.txt')
     key_inds = [int(i) for i in np.linspace(0, len(repro_traj), len(rots))]
     key_rots = R.from_quat([ [rots[ind][0], rots[ind][1], rots[ind][2], rots[ind][3]] for ind in range(len(rots))])
     '''
@@ -317,11 +305,14 @@ class MoveGroupPythonInterface(object):
     #print('Press enter to continue')
     #input()
     print('Planning')
+    
+    #self.move_group.set_planning_time(5)
+    #self.move_group.set_num_planning_attempts(10)
     waypoints = []
     wpose = self.move_group.get_current_pose().pose
-    for i in range(1, n_pts):
+    for i in range(690, n_pts):
     
-      wpose.position.x = -repro_traj[i][0] #/tf and rviz have x and y opposite signs
+      wpose.position.x = -repro_traj[i][0] + 0.1 #/tf and rviz have x and y opposite signs
       wpose.position.y = -repro_traj[i][1] 
       wpose.position.z = repro_traj[i][2]
       
@@ -348,9 +339,22 @@ class MoveGroupPythonInterface(object):
                                        0.001,       # eef_step
                                        0.0)       # jump_threshold
     print("Planning for " + str(fraction * 100) + "% of trajectory acheived!")
-    if fraction < 0.4:
+    if fraction < 0.9:
     	print("Not enough planned! Exiting...")
     	exit()
+    if plan.joint_trajectory.points[1].time_from_start.secs + plan.joint_trajectory.points[1].time_from_start.nsecs * 1e-9 <= plan.joint_trajectory.points[0].time_from_start.secs + plan.joint_trajectory.points[0].time_from_start.nsecs * 1e-9 :
+        print('(1) Trajectory will fail because of time ordering of points! fixing...')
+        plan.joint_trajectory.points[1].time_from_start.nsecs = (plan.joint_trajectory.points[0].time_from_start.nsecs + plan.joint_trajectory.points[2].time_from_start.nsecs) // 2 
+    for i in range(1, len(plan.joint_trajectory.points)-1):
+        if plan.joint_trajectory.points[i+1].time_from_start.secs + plan.joint_trajectory.points[i+1].time_from_start.nsecs * 1e-9 <= plan.joint_trajectory.points[i].time_from_start.secs + plan.joint_trajectory.points[i].time_from_start.nsecs * 1e-9 :
+            print(i-1, i, i+1)
+            print(plan.joint_trajectory.points[i-1].time_from_start.secs + plan.joint_trajectory.points[i-1].time_from_start.nsecs * 1e-9)
+            print(plan.joint_trajectory.points[i].time_from_start.secs + plan.joint_trajectory.points[i].time_from_start.nsecs * 1e-9)
+            print(plan.joint_trajectory.points[i+1].time_from_start.secs + plan.joint_trajectory.points[i+1].time_from_start.nsecs * 1e-9)
+            print('(2) Trajectory will fail because of time ordering of points! fixing...')
+            #exit()
+            plan.joint_trajectory.points[i].time_from_start.nsecs = (plan.joint_trajectory.points[i-1].time_from_start.nsecs + plan.joint_trajectory.points[i+1].time_from_start.nsecs) // 2 
+            
     return plan
 
   def display_trajectory(self, plan):
@@ -364,6 +368,49 @@ class MoveGroupPythonInterface(object):
   def execute_plan(self, plan):
     #execute given plan
     self.move_group.execute(plan, wait=True)
+    
+  def execute_plan_gripper(self, plan):
+    #execute given plan
+    repro_traj = np.loadtxt(REPRO_NAME, delimiter=',', skiprows=1)
+    gr_points = repro_traj[:, 3]
+    
+    #print(gr_points)
+    #print(plan)
+    end_time = plan.joint_trajectory.points[-1].time_from_start.secs
+    #print(end_time)
+    self.move_group.execute(plan, wait=False)
+    for i in range(len(gr_points)):
+        self.gripper_publisher.publish(int(gr_points[i] * 1.1 * 100))
+        rospy.sleep(end_time / len(gr_points))
+    
+  def execute_plan_gripper2(self, plan):
+    #execute given plan
+    repro_traj = np.loadtxt(REPRO_NAME)
+    repro_traj[:, 0] -= 0.1
+    gr_points = repro_traj[:, 3]
+    
+    self.move_group.execute(plan, wait=False)
+    i = 690
+    check = 0
+    while i < len(gr_points):
+        pos_msg = rospy.wait_for_message("/tf", tfMessage, timeout=10)
+        if pos_msg.transforms[0].child_frame_id == 'tool0_controller':
+            pos = np.array([pos_msg.transforms[0].transform.translation.x, pos_msg.transforms[0].transform.translation.y, pos_msg.transforms[0].transform.translation.z])
+            print(i, pos, repro_traj[i], np.linalg.norm(pos - repro_traj[i, :3]))
+            if np.linalg.norm(pos - repro_traj[i, :3]) < 0.01:
+                #print(i, gr_points[i])
+                self.gripper_publisher.publish(min(100, max(1, int(abs(gr_points[i+2]) * 1.1 * 100))))
+                i = i + 5
+                check = 0
+            elif np.linalg.norm(pos - repro_traj[-1, :3]) < 0.001:
+                if check == 0:
+                    print('Execution finished, but gripper did not. Check Once...')
+                    check += 1
+                if check != 0:
+                    self.gripper_publisher.publish(min(100, max(1, int(abs(gr_points[-1]) * 1. * 100))))
+                    print('Execution finished, but gripper did not. Check Twice... Exiting')
+                    return
+    return
 
   def wait_for_state_update(self, box_name, box_is_known=False, box_is_attached=False, timeout=4):
     #either this times out and returns false or the object is found within the planning scene and returns true
@@ -386,7 +433,7 @@ class MoveGroupPythonInterface(object):
     box_pose.header.frame_id = self.robot.get_planning_frame()
     #box origin (default = {0, 0, 0, 0, 0, 0, 0})
     box_pose.pose.orientation.w = 1.0
-    box_pose.pose.position.z = -0.07
+    box_pose.pose.position.z = -0.2
     self.box_name1 = "table"
     #add box to planning scene and specify dimensions
     self.scene.add_box(self.box_name1, box_pose, size=(10, 10, 0.1))
@@ -409,6 +456,42 @@ class MoveGroupPythonInterface(object):
     self.wait_for_state_update(self.box_name1, box_is_attached=False, box_is_known=False, timeout=timeout)
     self.scene.remove_world_object(self.box_name2)
     return self.wait_for_state_update(self.box_name2, box_is_attached=False, box_is_known=False, timeout=timeout) 
+
+def execute_succession():
+  try:
+    print("Playing back a demo")
+    print("Press Ctrl-D to exit at any time")
+    print("Press 'Enter' to begin")
+    input()
+    ur5e_arm = MoveGroupPythonInterface()
+    #table and wall have to be added in separately--for some reason adding them together didn't work
+    ur5e_arm.add_table()
+    ur5e_arm.add_wall()
+    
+    txt_names = ['LfD_segm_0.txt', 'LfD_segm_1.txt', 'LfD_segm_2.txt', 'LfD_segm_3.txt', 'LfD_segm_4.txt', 'LfD_segm_5.txt', 'LfD_segm_6.txt', 'LfD_segm_7.txt']
+    #txt_names = ['LfD_segm_2.txt', 'LfD_segm_3.txt', 'LfD_segm_4.txt', 'LfD_segm_5.txt', 'LfD_segm_6.txt', 'LfD_segm_7.txt', 'LfD_segm_8.txt', 'LfD_segm_9.txt', 'LfD_segm_10.txt', 'LfD_segm_11.txt', 'LfD_segm_12.txt', 'LfD_segm_13.txt', 'LfD_segm_14.txt', 'LfD_segm_15.txt', 'LfD_segm_16.txt', 'LfD_segm_17.txt']
+    idxs = [ 3601, 5598, 6596, 8595, 10095, 11595, 12095, 14093, 15590]
+    #idxs = [ 37158, 40607, 47053, 49028]
+    for i in range(len(txt_names)):
+        global REPRO_NAME, START_IDX, END_IDX
+        REPRO_NAME = txt_names[i]
+        START_IDX = idxs[i]
+        END_IDX = idxs[i+1]
+        print(txt_names[i], idxs[i], idxs[i+1])
+        print("Press 'Enter' to plan trajectory")
+        input()
+        plan = ur5e_arm.plan_cartesian_path()
+        ur5e_arm.display_trajectory(plan)
+        ur5e_arm.execute_plan_gripper2(plan)
+    
+    print("Execution complete")
+    #print("Press 'Enter' to exit'")
+    #input()
+    ur5e_arm.remove_workspace()
+  except rospy.ROSInterruptException:
+    return
+  except KeyboardInterrupt:
+    return
 
 
 def main():
@@ -436,11 +519,12 @@ def main():
     ur5e_arm.display_trajectory(plan)
     print("Press 'Enter' to execute trajectory")
     input()
-    ur5e_arm.execute_plan(plan)
+    #ur5e_arm.execute_plan(plan)
+    ur5e_arm.execute_plan_gripper2(plan)
     
     print("Execution complete")
-    print("Press 'Enter' to exit'")
-    input()
+    #print("Press 'Enter' to exit'")
+    #input()
     ur5e_arm.remove_workspace()
   except rospy.ROSInterruptException:
     return
@@ -448,5 +532,6 @@ def main():
     return
 
 if __name__ == '__main__':
+  #execute_succession()
   main()
 
