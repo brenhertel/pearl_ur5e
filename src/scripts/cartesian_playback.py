@@ -22,10 +22,10 @@ import matplotlib.pyplot as plt
 from scipy.spatial.transform import Rotation as R
 from scipy.spatial.transform import Slerp
 
-DEMO_NAME = 'h5_files/recorded_demo 2026-01-29 16:52:33.h5'
-REPRO_NAME = 'traj_res.txt'
-START_IDX = 17790
-END_IDX = 19282
+DEMO_NAME = 'h5_files/recorded_demo 2026-11-24 14:30:57.h5'
+REPRO_NAME = ''
+START_IDX = 0
+END_IDX = -1
 
 #not actually sure why this is here or why its necessary, but I suppose its a good way to test tolerances
 def all_close(goal, actual, tolerance):
@@ -257,21 +257,17 @@ class MoveGroupPythonInterface(object):
     js_data = np.array(js_data)
     #close out file
     hf.close()
-    
-    '''
-    inds = np.loadtxt('inds13_38_50.txt').astype('int')
-    pos_data = pos_data[inds]
-    rot_data = rot_data[inds]
-    js_data = js_data[inds]
-    '''
-    
+        
     #### move to starting position ####
     print("Press 'Enter' to start")
     input()
     print('Going to Joint State: ' + str(js_data[0]))
     self.goto_joint_state(js_data, 0)
     
-    repro_traj = np.loadtxt(REPRO_NAME)
+    if REPRO_NAME != '':
+        repro_traj = np.loadtxt(REPRO_NAME)
+    else:
+        repro_traj = pos_data
         
     print('start')
     print(repro_traj[0, :])
@@ -281,13 +277,12 @@ class MoveGroupPythonInterface(object):
         
     print("Press 'Enter' to move to starting position from xyz coords")
     input()
-    self.goto_xyz(repro_traj, rot_data, i=690)
-    #self.gripper_publisher.publish(int(repro_traj[0, 3] * 1.1 * 100))
+    self.goto_xyz(repro_traj, rot_data, i=START_IDX)
 
     
     (n_pts_og, _) = np.shape(rot_data)
-    og_moments = np.linspace(0, 1, 11) #[0.0, 0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8, 0.9, 1.0]
-    moments = np.linspace(0, 1, 11)  #[0.0, 0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8, 0.9, 1.0]
+    og_moments = np.linspace(0, 1, 11)
+    moments = np.linspace(0, 1, 11)
     true_inds = [int(og_moments[i] * (n_pts_og - 1)) for i in range(len(og_moments))]
     key_inds = [int(moments[i] * (n_pts - 1)) for i in range(len(moments))]
     key_rots = R.from_quat([ [rot_data[ind][0], rot_data[ind][1], rot_data[ind][2], rot_data[ind][3]] for ind in true_inds])
@@ -322,16 +317,7 @@ class MoveGroupPythonInterface(object):
       wpose.orientation.x = -cur_quats[0][1]
       wpose.orientation.y = cur_quats[0][0]
       wpose.orientation.z = cur_quats[0][3]
-      wpose.orientation.w = -cur_quats[0][2]
-      '''
-      new_quats = np.array([-cur_quats[0][1] - 0.2, cur_quats[0][0] - 0.1, cur_quats[0][3] - 0.1, -cur_quats[0][2]])
-      new_quats = new_quats / np.linalg.norm(new_quats)
-      wpose.orientation.x = new_quats[0]
-      wpose.orientation.y = new_quats[1]
-      wpose.orientation.z = new_quats[2]
-      wpose.orientation.w = new_quats[3]
-      '''
-      
+      wpose.orientation.w = -cur_quats[0][2]      
       
       waypoints.append(copy.deepcopy(wpose))
     (plan, fraction) = self.move_group.compute_cartesian_path(
@@ -371,8 +357,22 @@ class MoveGroupPythonInterface(object):
     
   def execute_plan_gripper(self, plan):
     #execute given plan
-    repro_traj = np.loadtxt(REPRO_NAME, delimiter=',', skiprows=1)
-    gr_points = repro_traj[:, 3]
+    if REPRO_NAME != '':
+        repro_traj = np.loadtxt(REPRO_NAME)
+        gr_points = repro_traj[:, 3]
+    else:
+        filename = DEMO_NAME
+        #open the file
+        hf = h5py.File(filename, 'r')
+        #navigate to necessary data and store in numpy arrays
+        tf_info = hf.get('transform_info')
+        gr_info = hf.get('gripper_info')
+        pos_data = tf_info.get('transform_positions')
+        repro_traj = np.array(pos_data)
+        gr_data = gr_info.get('gripper_position')
+        gr_points = np.array(gr_data)
+        #close out file
+        hf.close()
     
     #print(gr_points)
     #print(plan)
@@ -385,9 +385,22 @@ class MoveGroupPythonInterface(object):
     
   def execute_plan_gripper2(self, plan):
     #execute given plan
-    repro_traj = np.loadtxt(REPRO_NAME)
-    #repro_traj[:, 0] -= 0.1
-    gr_points = repro_traj[:, 3]
+    if REPRO_NAME != '':
+        repro_traj = np.loadtxt(REPRO_NAME)
+        gr_points = repro_traj[:, 3]
+    else:
+        filename = DEMO_NAME
+        #open the file
+        hf = h5py.File(filename, 'r')
+        #navigate to necessary data and store in numpy arrays
+        tf_info = hf.get('transform_info')
+        gr_info = hf.get('gripper_info')
+        pos_data = tf_info.get('transform_positions')
+        repro_traj = np.array(pos_data)
+        gr_data = gr_info.get('gripper_position')
+        gr_points = np.array(gr_data)
+        #close out file
+        hf.close()
     
     self.move_group.execute(plan, wait=False)
     i = 0
